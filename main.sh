@@ -3,7 +3,10 @@
 #USAGE: MAIN.SH FILE FOLDER FOLDER1 FOLDER2 FOLDER3...
 #WILL MOVE FILE TO FOLDER AND CHECK FOLDER1, 2 AND 3 FOR SYMLINKS
 
-OLD_PWD=$PWD
+OLD_PWD=$PWD #NOT TO BE MISTAKEN WITH GOOD OL' OLDPWD
+cd $2
+FINAL_PWD=$PWD
+cd $OLD_PWD
 
 symlink_checker () { #checks recursively if symbolic links are inside folder. Stores links in arrays.
     local -n ARRAY=$1
@@ -50,5 +53,69 @@ else         #else, go trough every listed folder in args
             iterator=$iterator+1
         done
 fi
-echo ${links[@]}
+###Itrating over link to get separated linkname, filepath and link actual path
+printf "All links detected: \n \n"
+for link in ${links[@]}
+do
+    link_readlink=`readlink -f "$link"`
+    actual_thing=`readlink -f "$OLD_PWD/$1"`
+    if [ "$link_readlink" = "$actual_thing" ]; then
+        LINK_NAME="$(basename -- $link)"
+        LINK_PATH="$(dirname "$link")"
+        LINK_ALMOST_POINTER_PATH=`readlink "$link"`
+        LINK_POINTER_PATH="$(dirname "$LINK_ALMOST_POINTER_PATH")"
+        LINK_POINTER_NAME="$(basename -- $LINK_ALMOST_POINTER_PATH)"
+        echo "$LINK_PATH/$LINK_NAME is link to $LINK_POINTER_PATH/$LINK_POINTER_NAME"
+    fi
+done
+printf "\nDo you wish to: redo all links (y or enter), do nothing (n) or\nprint all links in file and exit (type filename and enter)?\n\r"
+
+read user_answer
+if [[ $user_answer = "y" || $user_answer = "" || $user_answer = "Y" ]]; then
+for link in ${links[@]}   #the magic happens here. Redirecting links to new filepath.
+    do
+        link_readlink=`readlink -f "$link"`
+        actual_thing=`readlink -f "$OLD_PWD/$1"`
+        if [ "$link_readlink" = "$actual_thing" ]; then
+            LINK_NAME="$(basename -- $link)"
+            LINK_PATH="$(dirname "$link")"
+            LINK_ALMOST_POINTER_PATH=`readlink "$link"`
+            LINK_POINTER_PATH="$(dirname "$LINK_ALMOST_POINTER_PATH")"
+            LINK_POINTER_NAME="$(basename -- $LINK_ALMOST_POINTER_PATH)"
+            ##SO NOW WE HAVE ALL WE NEED TO KNOW ABOUT THE LINKS. LETS USE IT.##
+            #if [[ "$LINK_POINTER_PATH/$LINK_POINTER_NAME" = *".."* ]]; then
+            #else
+                cd $LINK_PATH
+                unlink $LINK_NAME
+                ln -s "$FINAL_PWD/$LINK_POINTER_NAME" $LINK_NAME
+            #fi
+        fi
+    done
+exit 0
+fi
+if [[ $user_answer = "n" || $user_answer = "N" ]]; then
+    exit 0
+fi
+if [[ ! $user_answer = "" || $user_answer = "*" ]]; then
+if test -f "$user_answer"; then
+    echo "File already exists. Exiting."
+    exit 0
+fi
+touch $user_answer
+for link in ${links[@]}
+    do
+        link_readlink=`readlink -f "$link"`
+        actual_thing=`readlink -f "$OLD_PWD/$1"`
+        if [ "$link_readlink" = "$actual_thing" ]; then
+            LINK_NAME="$(basename -- $link)"
+            LINK_PATH="$(dirname "$link")"
+            LINK_ALMOST_POINTER_PATH=`readlink "$link"`
+            LINK_POINTER_PATH="$(dirname "$LINK_ALMOST_POINTER_PATH")"
+            LINK_POINTER_NAME="$(basename -- $LINK_ALMOST_POINTER_PATH)"
+            echo "$LINK_PATH/$LINK_NAME --is link to--> $LINK_POINTER_PATH/$LINK_POINTER_NAME" >> $user_answer
+        fi
+    done
+echo "done."
+fi
+#echo ${links[@]}
 #mv ${*: -2:1} ${*: -1:1} #actually moving file
