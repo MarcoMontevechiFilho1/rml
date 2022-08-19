@@ -83,12 +83,14 @@ for link in ${links[@]}   #the magic happens here. Redirecting links to new file
             LINK_POINTER_PATH="$(dirname "$LINK_ALMOST_POINTER_PATH")"
             LINK_POINTER_NAME="$(basename -- $LINK_ALMOST_POINTER_PATH)"
             ##SO NOW WE HAVE ALL WE NEED TO KNOW ABOUT THE LINKS. LETS USE IT.##
-            #if [[ "$LINK_POINTER_PATH/$LINK_POINTER_NAME" = *".."* ]]; then
-            #else
+            if [[ "$LINK_POINTER_PATH/$LINK_POINTER_NAME" = *".."* ]]; then
+                
+            else
                 cd $LINK_PATH
                 unlink $LINK_NAME
                 ln -s "$FINAL_PWD/$LINK_POINTER_NAME" $LINK_NAME
-            #fi
+                cd -
+            fi
         fi
     done
 exit 0
