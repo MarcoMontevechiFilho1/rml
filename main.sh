@@ -124,7 +124,7 @@ for link in ${links[@]}
             echo "$LINK_PATH/$LINK_NAME --is link to--> $LINK_POINTER_PATH/$LINK_POINTER_NAME" >> $user_answer
         fi
     done
-echo "done."
+echo "done. No links fixed, just log written."
 fi
 printf "Finally move file? If there is any symlink in previous folder\n it will be overriden by file. That shouldnt be a problem,\nshould it?\ny tmo move file, n for not moving file."
 read user_input
