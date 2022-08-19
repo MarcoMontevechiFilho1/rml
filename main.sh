@@ -84,7 +84,14 @@ for link in ${links[@]}   #the magic happens here. Redirecting links to new file
             LINK_POINTER_NAME="$(basename -- $LINK_ALMOST_POINTER_PATH)"
             ##SO NOW WE HAVE ALL WE NEED TO KNOW ABOUT THE LINKS. LETS USE IT.##
             if [[ "$LINK_POINTER_PATH/$LINK_POINTER_NAME" = *".."* ]]; then
-                
+                cd $LINK_PATH
+                current_try="$LINK_POINTER_PATH"
+                while [ ! "`readlink -f $current_try/$2`" = "`readlink -f $FINAL_PWD`" ]; do
+                    current_try=${current_try%..*}
+                done
+                unlink $LINK_NAME
+                ln -s "$current_try/$2/$1" $LINK_NAME
+                cd -
             else
                 cd $LINK_PATH
                 unlink $LINK_NAME
@@ -119,5 +126,16 @@ for link in ${links[@]}
     done
 echo "done."
 fi
-#echo ${links[@]}
-#mv ${*: -2:1} ${*: -1:1} #actually moving file
+printf "Finally move file? If there is any symlink in previous folder\n it will be overriden by file. That shouldnt be a problem,\nshould it?\ny tmo move file, n for not moving file."
+read user_input
+
+if [ $user_input = "y" || $user_input = "Y" ]; then
+    echo "moving file..."
+    mv $1 $2 #actually moving file
+    echo "done."
+    exit 0
+elif [ $user_input = "n" || $user_input = "N" ]; then
+    echo "Ok but all symlinks have already been moved. They are probably broken now."
+    exit 0
+else
+    echo "Unknown answer. Exiting without moving files. Leaving symlinks broken. You can fix that by doing 'mv $1 $2'"
